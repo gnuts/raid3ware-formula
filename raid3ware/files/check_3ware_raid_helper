@@ -1,0 +1,68 @@
+#!/bin/bash
+#############################################################################
+#############################################################################
+#
+# check_3ware_raid_helper
+#
+#############################################################################
+#
+# Hash:     9258e7f3eb7db916921babe8e17e2735
+# Location: /usr/local/nagios/libexec/check_3ware_raid_helper
+# Crontab:  */5 * * * * [ -x /usr/local/nagios/libexec/check_3ware_raid_helper ] && /usr/local/nagios/libexec/check_3ware_raid_helper
+#
+#############################################################################
+#############################################################################
+
+TW_CLI="/opt/3ware/bin/tw_cli_noarch"
+
+#NAGIOS_TMP_DIR="/tmp"
+#NAGIOS_ETC_DIR="/usr/local/nagios/etc"
+#STATE_FILE="$NAGIOS_TMP_DIR/check_3ware_raid"
+
+#############################################################################
+# main
+#############################################################################
+(
+if [ -x $TW_CLI ]; then
+        $TW_CLI info |
+        awk '/^c[0-9]+ / { print($1, $2); }' |
+        while read CONTROLLER MODEL; do
+                echo -n " [$CONTROLLER ($MODEL)"
+                $TW_CLI info "$CONTROLLER" unitstatus |
+                awk '/^u[0-9]+ / {
+                        printf(", %s %s %s", $1, $2, $3);
+                        if (($3 != "OK") && ($3 != "VERIFYING")) printf("__CRITICAL__");
+                        }'
+
+                $TW_CLI info "$CONTROLLER" drivestatus |
+                awk '/^p[0-9]+ / {
+                        if ($2 == "NOT-PRESENT") next;
+                        printf(", %s (serial:%s) %s", $1, $7, $2);
+                        if (($2 != "OK") && ($2 != "VERIFYING")) printf("__CRITICAL__");
+                        }'
+                echo "]"
+        done
+else
+        echo "[__CRITICAL__ tw_cli binary not found]"
+fi |
+awk '{
+        if ($0 ~ /__CRITICAL__/)
+                {
+                gsub(/__CRITICAL__/, "");
+                printf("CRITICAL");
+                }
+        else printf("OK");
+        gsub(/ +/, " ");
+        sub(/^ */, "");
+        sub(/ *$/, "");
+        if ($0 != "") printf(" %s", $0);
+        printf("\n");
+        }'
+)
+
+#) > "$STATE_FILE.result.tmp"
+#
+#cat "$STATE_FILE.result.tmp" > "$STATE_FILE.result"
+#rm -f "$STATE_FILE.result.tmp"
+################################################################### red-tag #
+

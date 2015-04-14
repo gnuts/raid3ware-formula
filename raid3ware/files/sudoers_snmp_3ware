@@ -1,0 +1,2 @@
+snmp ALL=NOPASSWD: /opt/3ware/bin/check_3ware_raid_helper
+
