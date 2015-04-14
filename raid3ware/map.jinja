@@ -1,0 +1,8 @@
+{% set map = salt['grains.filter_by']({
+    'Debian': {
+        'sudopkgs': ['sudo'],
+        'sudodir': '/etc/sudoers.d',
+        'snmpconf': '/etc/snmp/snmpd.conf',
+    },
+}, grain='os', merge=salt['pillar.get']('raid3ware:lookup')) %}
+
