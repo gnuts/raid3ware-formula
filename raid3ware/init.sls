@@ -28,7 +28,6 @@ raid3ware_sudoersd:
     - require:
       pkg: raid3ware_sudo_packages
 
-
 raid3ware_snmp_extend:
   file.append:
     - name: {{ map.snmpconf }}
